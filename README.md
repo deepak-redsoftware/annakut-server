@@ -2,6 +2,10 @@
 
 > A system to help annakut stakeholders in tracking donations.
 
+## API Documentation
+
+Postman API documentation is published [here](https://documenter.getpostman.com/view/30171331/2s9YJaZQ3N).
+
 ### Env Variables
 
 Create a `.env` file and add the following variables:
