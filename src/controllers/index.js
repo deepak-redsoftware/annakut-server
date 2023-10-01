@@ -5,4 +5,12 @@ import {
   resetPassword,
 } from "./user/user-controller.js";
 
-export { registerUser, loginUser, getAuthenticatedUser, resetPassword };
+import { createMasterBooks } from "./book/book-controller.js";
+
+export {
+  registerUser,
+  loginUser,
+  getAuthenticatedUser,
+  resetPassword,
+  createMasterBooks,
+};
