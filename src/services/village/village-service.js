@@ -19,6 +19,11 @@ class VillageService extends CrudRepository {
       if (!xetraExists) {
         throw new Error("Xetra does not exist");
       }
+      const villageExists = await this.getVillageByName(villageData.name);
+      if (villageExists) {
+        throw new Error("Village with that name already exists");
+      }
+
       let village, counter;
       const session = await Counter.startSession();
       await session.withTransaction(async () => {
@@ -50,6 +55,16 @@ class VillageService extends CrudRepository {
       });
       await session.endSession();
       return village[0];
+    } catch (error) {
+      console.error(`Error at village service layer: ${error}`);
+      throw error;
+    }
+  }
+
+  async getVillageByName(name) {
+    try {
+      const village = await Village.findOne({ name });
+      return village;
     } catch (error) {
       console.error(`Error at village service layer: ${error}`);
       throw error;
