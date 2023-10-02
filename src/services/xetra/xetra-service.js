@@ -50,6 +50,16 @@ class XetraService extends CrudRepository {
       throw error;
     }
   }
+
+  async getXetraByName(name) {
+    try {
+      const xetra = await Xetra.findOne({ name });
+      return xetra;
+    } catch (error) {
+      console.error(`Error at xetra service layer: ${error}`);
+      throw error;
+    }
+  }
 }
 
 export default XetraService;

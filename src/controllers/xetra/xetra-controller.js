@@ -14,7 +14,7 @@ const createXetra = asyncHandler(async (req, res) => {
     throw new Error("Xetra name is required");
   }
 
-  const creatorObj = { name };
+  const creatorObj = { name: name.trim() };
 
   if (description) {
     creatorObj.description = description;
