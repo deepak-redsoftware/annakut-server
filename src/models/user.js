@@ -23,19 +23,18 @@ const userSchema = new mongoose.Schema(
     },
     mobile_number: {
       type: String,
-      required: true
+      required: true,
     },
     role: {
       type: String,
       required: true,
-      enum: ['Admin', 'IT Nirikshak', 'Sevak'],
-      default: 'Sevak'
+      enum: ["Admin", "IT Nirikshak", "Sevak"],
     },
     sevaks: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      }
+        ref: "User",
+      },
     ],
     books: [
       {
@@ -45,36 +44,40 @@ const userSchema = new mongoose.Schema(
         bookID_to: {
           type: Number,
         },
-      }
+      },
     ],
     xetra: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Xetra'
+      ref: "Xetra",
     },
     xetras: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Xetra'
-      }
+        ref: "Xetra",
+      },
     ],
     village: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Village'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Village",
     },
     security_question: {
-        type: String,
-        enum: ['What was your first school name?', 'What was your first friend\'s name?', 'What is your favourite color?']
+      type: String,
+      enum: [
+        "What was your first school name?",
+        "What was your first friend's name?",
+        "What is your favourite color?",
+      ],
     },
     security_answer: {
-        type: String,
-        default: null
+      type: String,
+      default: null,
     },
     total_donation_collected: {
       type: Number,
     },
     amount_deposited_to_temple: {
       type: Number,
-    }
+    },
   },
   {
     timestamps: true,

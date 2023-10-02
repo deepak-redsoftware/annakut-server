@@ -8,17 +8,27 @@ const userService = new UserService();
 // @route   POST /users/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, password, mobile_number } = req.body;
+  const { name, password, mobile_number, role } = req.body;
 
-  if (!name?.trim() || !password || !mobile_number?.trim()) {
+  if (!name?.trim() || !password || !mobile_number?.trim() || !role?.trim()) {
     res.status(400);
     throw new Error("All fields are required");
   }
 
+  if (
+    role?.trim() !== "Admin" &&
+    role?.trim() !== "IT Nirikshak" &&
+    role?.trim() !== "Sevak"
+  ) {
+    res.status(400);
+    throw new Error("Invalid Role");
+  }
+
   const user = await userService.register({
-    name,
+    name: name?.trim(),
     password,
-    mobile_number,
+    mobile_number: mobile_number?.trim(),
+    role: role?.trim(),
   });
 
   if (user) {
