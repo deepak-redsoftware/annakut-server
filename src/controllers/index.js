@@ -3,6 +3,7 @@ import {
   loginUser,
   getAuthenticatedUser,
   resetPassword,
+  registerSevak,
 } from "./user/user-controller.js";
 
 import { createMasterBooks } from "./book/book-controller.js";
@@ -19,4 +20,5 @@ export {
   createMasterBooks,
   createXetra,
   createVillage,
+  registerSevak,
 };

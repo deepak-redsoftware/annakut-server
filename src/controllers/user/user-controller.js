@@ -6,7 +6,7 @@ const userService = new UserService();
 
 // @desc    Register user
 // @route   POST /users/register
-// @access  Public
+// @access  Protected
 const registerUser = asyncHandler(async (req, res) => {
   const {
     name,
@@ -40,7 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
   };
 
   if (role === "IT Nirikshak") {
-    if (!xetra_name?.trim() || !Number(from_bookID) || !Number(to_bookID)) {
+    if (!xetra_name?.trim() || !parseInt(from_bookID) || !parseInt(to_bookID)) {
       res.status(400);
       throw new Error("All fields are required");
     }
@@ -50,12 +50,73 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new Error("From_BookID must be less than or equal to To_BookID");
     }
 
-    creatorObj.from_bookID = Number(from_bookID);
-    creatorObj.to_bookID = Number(to_bookID);
+    creatorObj.from_bookID = parseInt(from_bookID);
+    creatorObj.to_bookID = parseInt(to_bookID);
     creatorObj.xetraName = xetra_name.trim();
   }
 
   const user = await userService.register(creatorObj);
+
+  if (user) {
+    res.status(201).json({
+      status: "success",
+      data: {
+        name: user.name,
+        userID: user.userID,
+        role: user.role,
+      },
+    });
+  } else {
+    throw new Error("Invalid user data");
+  }
+});
+
+// @desc    Register Sevak
+// @route   POST /users/registerSevak
+// @access  Protected
+const registerSevak = asyncHandler(async (req, res) => {
+  const {
+    name,
+    password,
+    mobile_number,
+    role,
+    xetra_name,
+    village_name,
+    from_bookID,
+    to_bookID,
+  } = req.body;
+
+  if (
+    !name?.trim() ||
+    !password ||
+    !mobile_number?.trim() ||
+    !role?.trim() ||
+    !xetra_name?.trim() ||
+    !village_name?.trim() ||
+    !parseInt(from_bookID) ||
+    !parseInt(to_bookID)
+  ) {
+    res.status(400);
+    throw new Error("All fields are required");
+  }
+
+  if (parseInt(from_bookID) > parseInt(to_bookID)) {
+    res.status(400);
+    throw new Error("From_BookID must be less than or equal to To_BookID");
+  }
+
+  const creatorObj = {
+    name: name.trim(),
+    mobile_number: mobile_number.trim(),
+    role: "Sevak",
+    password,
+    xetra_name: xetra_name.trim(),
+    village_name: village_name.trim(),
+    from_bookID: parseInt(from_bookID),
+    to_bookID: parseInt(to_bookID),
+  };
+
+  const user = await userService.register(creatorObj, req.user);
 
   if (user) {
     res.status(201).json({
@@ -77,7 +138,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { userID, password } = req.body;
 
-  if (!userID.trim() || !password) {
+  if (!userID?.trim() || !password) {
     res.status(400);
     throw new Error("All fields are required");
   }
@@ -89,8 +150,12 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  if (user.role !== "Admin" && user.security_answer === null) {
-    res.status(400);
+  if (
+    user.role !== "Admin" &&
+    user.security_answer === null &&
+    (await user.matchPassword(password))
+  ) {
+    res.status(401);
     throw new Error("Signup required first");
   }
 
@@ -166,4 +231,10 @@ const resetPassword = asyncHandler(async (req, res) => {
   });
 });
 
-export { registerUser, loginUser, getAuthenticatedUser, resetPassword };
+export {
+  registerUser,
+  loginUser,
+  getAuthenticatedUser,
+  resetPassword,
+  registerSevak,
+};

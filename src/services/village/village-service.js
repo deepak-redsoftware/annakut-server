@@ -4,8 +4,6 @@ import Village from "../../models/village.js";
 import { CrudRepository } from "../../repositories/index.js";
 import XetraService from "../xetra/xetra-service.js";
 
-const xetraService = new XetraService();
-
 class VillageService extends CrudRepository {
   constructor() {
     super(Village);
@@ -13,6 +11,7 @@ class VillageService extends CrudRepository {
 
   async createVillage(villageData) {
     try {
+      const xetraService = new XetraService();
       const xetraExists = await xetraService.getXetraByName(
         villageData.xetraName
       );
@@ -21,7 +20,7 @@ class VillageService extends CrudRepository {
       }
       const villageExists = await this.getVillageByName(villageData.name);
       if (villageExists) {
-        throw new Error("Village with that name already exists");
+        throw new Error("Village with same name already exists");
       }
 
       let village, counter;

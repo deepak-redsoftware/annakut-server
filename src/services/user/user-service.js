@@ -4,17 +4,18 @@ import { CrudRepository } from "../../repositories/index.js";
 import { JWT_SECRET } from "../../config/server-config.js";
 import Counter from "../../models/counter.js";
 import { BOOK_ID_START, USER_ID_START } from "../../constants/index.js";
-import { XetraService, BookService } from "../index.js";
+import { XetraService, BookService, VillageService } from "../index.js";
 
 class UserService extends CrudRepository {
   constructor() {
     super(User);
   }
 
-  async register(userData) {
+  async register(userData, currUser) {
     try {
       const bookService = new BookService();
       const xetraService = new XetraService();
+      const villageService = new VillageService();
 
       let [aggResult] = await User.aggregate([
         {
@@ -42,29 +43,65 @@ class UserService extends CrudRepository {
         userData.xetras = [];
         userData.xetras.push(xetraExists._id);
         delete userData.xetraName;
+      } else if (userData.role === "Sevak") {
+        const xetraExists = await xetraService.getXetraByName(
+          userData.xetra_name
+        );
+        if (!xetraExists) {
+          throw new Error("Xetra does not exist");
+        }
+        userData.xetra = xetraExists._id;
 
-        const next_book_id = await bookService.getNextSequenceByID("bookID");
-        if (!aggResult) {
-          aggResult = {
-            minBookID_from: BOOK_ID_START,
-            maxBookID_to:
-              next_book_id === null ? BOOK_ID_START : next_book_id - 1,
-          };
+        const villageExists = await villageService.getVillageByName(
+          userData.village_name
+        );
+        if (!villageExists) {
+          throw new Error("Village does not exist");
         }
-        if (
-          userData.from_bookID >= aggResult.minBookID_from &&
-          userData.to_bookID < next_book_id === null
-            ? BOOK_ID_START
-            : next_book_id
-        ) {
-          userData.books = [];
-          userData.books.push({
-            bookID_from: userData.from_bookID,
-            bookID_to: userData.to_bookID,
-          });
-        } else {
-          throw new Error("Invalid Range");
+        userData.village = villageExists._id;
+
+        const loggedInUser = await this.getLoggedInUser(currUser);
+        // if it's IT Nirikshak, we need to check if selected xetra is under them
+        if (loggedInUser.role === "IT Nirikshak") {
+          const isXetraUnderUser = await this.isXetraUnderUser(
+            loggedInUser.userID,
+            userData.xetra
+          );
+          if (!isXetraUnderUser) {
+            throw new Error("Selected Xetra is not under the current user");
+          }
         }
+
+        // if selceted village is under the selected xetra
+        const isVillageUnderXetra = await xetraService.isVillageUnderXetra(
+          userData.xetra_name,
+          userData.village_name
+        );
+        if (!isVillageUnderXetra) {
+          throw new Error("Selected Village does not belong to selected Xetra");
+        }
+      }
+
+      const next_book_id = await bookService.getNextSequenceByID("bookID");
+      if (!aggResult) {
+        aggResult = {
+          minBookID_from: BOOK_ID_START,
+          maxBookID_to:
+            next_book_id === null ? BOOK_ID_START : next_book_id - 1,
+        };
+      }
+      if (
+        userData.from_bookID >= aggResult.minBookID_from &&
+        userData.to_bookID <
+          (next_book_id === null ? BOOK_ID_START : next_book_id)
+      ) {
+        userData.books = [];
+        userData.books.push({
+          bookID_from: userData.from_bookID,
+          bookID_to: userData.to_bookID,
+        });
+      } else {
+        throw new Error("Invalid Range");
       }
 
       let user, counter;
@@ -103,6 +140,13 @@ class UserService extends CrudRepository {
           );
           await xetraService.assignBooksToXetra(
             userData.xetra,
+            userData.from_bookID,
+            userData.to_bookID
+          );
+        } else if (userData.role === "Sevak") {
+          // Assign books to sevak
+          await bookService.assignToSevak(
+            user[0]._id,
             userData.from_bookID,
             userData.to_bookID
           );
@@ -165,6 +209,43 @@ class UserService extends CrudRepository {
         },
       });
       return user;
+    } catch (error) {
+      console.error(`Error at user service layer: ${error}`);
+      throw error;
+    }
+  }
+
+  async isAlreadyAllocatedBooksToSevak(from, to) {
+    try {
+      const user = await User.findOne({
+        books: {
+          $elemMatch: {
+            bookID_from: { $lte: to }, // Check if bookID_from is less than or equal to bookID_to
+            bookID_to: { $gte: from }, // Check if bookID_to is greater than or equal to bookID_from
+          },
+        },
+        role: "Sevak",
+      });
+      return user;
+    } catch (error) {
+      console.error(`Error at user service layer: ${error}`);
+      throw error;
+    }
+  }
+
+  async isXetraUnderUser(userID, xetra) {
+    try {
+      const user = await User.findOne({ userID });
+      if (!user) {
+        throw new Error("User does not exist");
+      }
+
+      if (Array.isArray(user.xetras)) {
+        let ans = user.xetras.filter((x) => x.equals(xetra));
+        return ans.length > 0;
+      } else {
+        throw new Error("No xetras under this user");
+      }
     } catch (error) {
       console.error(`Error at user service layer: ${error}`);
       throw error;

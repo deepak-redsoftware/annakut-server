@@ -99,6 +99,28 @@ class BookService extends CrudRepository {
       throw error;
     }
   }
+
+  async assignToSevak(userId, from, to) {
+    try {
+      const userService = new UserService();
+
+      const alreadyAllocatedToUser =
+        await userService.isAlreadyAllocatedBooksToSevak(from, to);
+      if (alreadyAllocatedToUser) {
+        throw new Error("This range is already allocated to an existing user");
+      }
+
+      await Book.updateMany(
+        {
+          bookID: { $gte: from, $lte: to },
+        },
+        { $set: { assignedTo: userId } }
+      );
+    } catch (error) {
+      console.error(`Error at book service layer: ${error}`);
+      throw error;
+    }
+  }
 }
 
 export default BookService;

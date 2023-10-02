@@ -2,6 +2,7 @@ import { XETRA_ID_START } from "../../constants/index.js";
 import Counter from "../../models/counter.js";
 import Xetra from "../../models/xetra.js";
 import CrudRepository from "../../repositories/crud-repository.js";
+import VillageService from "../village/village-service.js";
 
 class XetraService extends CrudRepository {
   constructor() {
@@ -97,6 +98,22 @@ class XetraService extends CrudRepository {
         await xetra.save();
       }
       return xetra;
+    } catch (error) {
+      console.error(`Error at xetra service layer: ${error}`);
+      throw error;
+    }
+  }
+
+  async isVillageUnderXetra(xetraName, villageName) {
+    try {
+      const villageService = new VillageService();
+      const xetra = await this.getXetraByName(xetraName);
+      const village = await villageService.getVillageByName(villageName);
+      if (xetra._id.equals(village.xetra)) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
       console.error(`Error at xetra service layer: ${error}`);
       throw error;
