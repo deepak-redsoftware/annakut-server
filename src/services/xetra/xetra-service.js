@@ -60,6 +60,48 @@ class XetraService extends CrudRepository {
       throw error;
     }
   }
+
+  // async isAlreadyAllocatedBooks(from, to) {
+  //   try {
+  //     const xetra = await Xetra.findOne({
+  //       books: {
+  //         $elemMatch: {
+  //           bookID_from: { $lte: to }, // Check if bookID_from is less than or equal to bookID_to
+  //           bookID_to: { $gte: from }, // Check if bookID_to is greater than or equal to bookID_from
+  //         },
+  //       },
+  //     });
+  //     return xetra;
+  //   } catch (error) {
+  //     console.error(`Error at xetra service layer: ${error}`);
+  //     throw error;
+  //   }
+  // }
+
+  async assignBooksToXetra(xetraId, from, to) {
+    try {
+      // const alreadyAllocatedToXetra = await this.isAlreadyAllocatedBooks(
+      //   from,
+      //   to
+      // );
+      // if (alreadyAllocatedToXetra) {
+      //   throw new Error("This range is already allocated to an existing Xetra");
+      // }
+
+      const xetra = await Xetra.findOne({ _id: xetraId });
+      if (xetra) {
+        xetra.books.push({
+          bookID_from: from,
+          bookID_to: to,
+        });
+        await xetra.save();
+      }
+      return xetra;
+    } catch (error) {
+      console.error(`Error at xetra service layer: ${error}`);
+      throw error;
+    }
+  }
 }
 
 export default XetraService;

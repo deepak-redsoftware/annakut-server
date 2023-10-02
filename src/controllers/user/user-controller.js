@@ -8,7 +8,15 @@ const userService = new UserService();
 // @route   POST /users/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, password, mobile_number, role } = req.body;
+  const {
+    name,
+    password,
+    mobile_number,
+    role,
+    xetra_name,
+    from_bookID,
+    to_bookID,
+  } = req.body;
 
   if (!name?.trim() || !password || !mobile_number?.trim() || !role?.trim()) {
     res.status(400);
@@ -24,12 +32,30 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid Role");
   }
 
-  const user = await userService.register({
-    name: name?.trim(),
-    password,
-    mobile_number: mobile_number?.trim(),
+  const creatorObj = {
+    name: name.trim(),
+    mobile_number: mobile_number.trim(),
     role: role?.trim(),
-  });
+    password,
+  };
+
+  if (role === "IT Nirikshak") {
+    if (!xetra_name?.trim() || !Number(from_bookID) || !Number(to_bookID)) {
+      res.status(400);
+      throw new Error("All fields are required");
+    }
+
+    if (parseInt(from_bookID) > parseInt(to_bookID)) {
+      res.status(400);
+      throw new Error("From_BookID must be less than or equal to To_BookID");
+    }
+
+    creatorObj.from_bookID = Number(from_bookID);
+    creatorObj.to_bookID = Number(to_bookID);
+    creatorObj.xetraName = xetra_name.trim();
+  }
+
+  const user = await userService.register(creatorObj);
 
   if (user) {
     res.status(201).json({
